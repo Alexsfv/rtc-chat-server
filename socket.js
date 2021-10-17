@@ -37,6 +37,16 @@ module.exports = function (io) {
             }
         })
 
+        socket.on('peerDisconnect', (data) => {
+            const socketId = socketIds.find(id => data.partnerId === id)
+            if (socketId) {
+                socket
+                    .to(socketId)
+                    .emit('peerDisconnect')
+                console.log('peerDisconnect,', socketId);
+            }
+        })
+
         socket.on('disconnect', () => {
             socketIds = socketIds.filter(id => sId !== id)
         })
