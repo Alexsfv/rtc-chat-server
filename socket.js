@@ -17,6 +17,20 @@ module.exports = function (io) {
             }
         })
 
+        socket.on('sendRandomOffer', (data) => {
+            const otherSocketIds = socketIds.filter(id => id !== sId)
+            const randomIdx = Math.floor((Math.random()*otherSocketIds.length))
+            const randomCaleeId = otherSocketIds[randomIdx]
+            if (randomCaleeId) {
+                const offerData = {
+                    ...data,
+                    calleeId: randomCaleeId
+                }
+                socket.emit('sendRandomOffer', offerData)
+                console.log('sendRandomOffer');
+            }
+        })
+
         socket.on('sendAnswerSDP', (data) => {
             const callerId = socketIds.find(id => data.caller.id === id)
             if (callerId) {
