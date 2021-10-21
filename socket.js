@@ -3,6 +3,8 @@ let socketIds = []
 module.exports = function (io) {
     io.on('connection', (socket) => {
         const sId = socket.id
+        let availableRandomSocketIds = []
+
         socketIds.push(sId)
 
         socket.emit('setPersonalCode', sId)
@@ -18,8 +20,13 @@ module.exports = function (io) {
         })
 
         socket.on('sendRandomOffer', (data) => {
-            const otherSocketIds = socketIds.filter(id => id !== sId)
-            const randomIdx = Math.floor((Math.random()*otherSocketIds.length))
+            if (data.prevRandomCalleeId) {
+                availableRandomSocketIds = availableRandomSocketIds.filter(id => id !== data.prevRandomCalleeId)
+            } else {
+                availableRandomSocketIds = [...socketIds]
+            }
+            const otherSocketIds = availableRandomSocketIds.filter(id => id !== sId)
+            const randomIdx = Math.floor((Math.random() * otherSocketIds.length))
             const randomCaleeId = otherSocketIds[randomIdx]
             if (randomCaleeId) {
                 const offerData = {
@@ -28,6 +35,9 @@ module.exports = function (io) {
                 }
                 socket.emit('sendRandomOffer', offerData)
                 console.log('sendRandomOffer');
+            }
+            if (!otherSocketIds.length) {
+                socket.emit('emptyAvailableRandom')
             }
         })
 
@@ -54,6 +64,7 @@ module.exports = function (io) {
         socket.on('peerDisconnect', (data) => {
             const socketId = socketIds.find(id => data.partnerId === id)
             if (socketId) {
+                availableRandomSocketIds = [...socketIds]
                 socket
                     .to(socketId)
                     .emit('peerDisconnect')
